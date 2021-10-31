@@ -15,9 +15,7 @@ if (BUILD_DELAUNAY_DEMO)
 endif()
 
 
-add_library(delaunay INTERFACE
-    include/Delaunay.hpp
-)
+add_library(delaunay INTERFACE)
 
 target_include_directories(delaunay
     INTERFACE

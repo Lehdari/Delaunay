@@ -17,10 +17,10 @@
 #include <cstdint>
 
 
-#ifdef INLINE
-    #error "INLINE already defined"
+#ifdef DELAUNAY_INLINE
+    #error "DELAUNAY_INLINE already defined"
 #endif
-#define INLINE inline __attribute__((always_inline))
+#define DELAUNAY_INLINE inline __attribute__((always_inline))
 
 
 namespace {
@@ -36,7 +36,7 @@ namespace {
     };
 
     template <typename T_Scalar>
-    INLINE bool ccw(
+    DELAUNAY_INLINE bool ccw(
         const Eigen::Matrix<T_Scalar, 2, 1>& a,
         const Eigen::Matrix<T_Scalar, 2, 1>& b,
         const Eigen::Matrix<T_Scalar, 2, 1>& c)
@@ -51,7 +51,7 @@ namespace {
 
     // is d inside of circumcircle of abc?
     template <typename T_Scalar>
-    INLINE bool inCircle(
+    DELAUNAY_INLINE bool inCircle(
         const Eigen::Matrix<T_Scalar, 2, 1>& a,
         const Eigen::Matrix<T_Scalar, 2, 1>& b,
         const Eigen::Matrix<T_Scalar, 2, 1>& c,
@@ -68,7 +68,7 @@ namespace {
 
     // initial primitive construction functions for edges and triangles
     template <template <typename, typename> class T_Vector, typename T_Scalar, typename T_Allocator>
-    INLINE void createEdge(const T_Vector<Eigen::Matrix<T_Scalar, 2, 1>, T_Allocator>& points,
+    DELAUNAY_INLINE void createEdge(const T_Vector<Eigen::Matrix<T_Scalar, 2, 1>, T_Allocator>& points,
         std::vector<Triangle>& triangles, int v1, int v2, int& firstTriangle, int& lastTriangle)
     {
         int s = triangles.size();
@@ -80,7 +80,7 @@ namespace {
     }
 
     template <template <typename, typename> class T_Vector, typename T_Scalar, typename T_Allocator>
-    INLINE void createTriangle(
+    DELAUNAY_INLINE void createTriangle(
         T_Vector<Eigen::Matrix<T_Scalar, 2, 1>, T_Allocator>& points,
         std::vector<Triangle>& triangles, int v1, int v2, int v3, int& firstTriangle, int& lastTriangle)
     {
@@ -103,7 +103,7 @@ namespace {
     // t: triangle neighbour of which is to be updated
     // current: current neighbour triangle id to be changed
     // updated: triangle id of the new neighbour
-    INLINE void updateNeighbour(Triangle& t, int current, int updated)
+    DELAUNAY_INLINE void updateNeighbour(Triangle& t, int current, int updated)
     {
         if (t.neighbours[0] == current) {
             t.neighbours[0] = updated;
@@ -120,7 +120,7 @@ namespace {
     }
 
     // rotate triangle indices so that vertex id of -1 is at index 2, no-op for non-ghost or correct ghost triangles
-    INLINE void correctGhost(Triangle& t)
+    DELAUNAY_INLINE void correctGhost(Triangle& t)
     {
         if (t.vertices[0] == -1) {
             int tempVertex = t.vertices[2];
@@ -184,7 +184,7 @@ namespace {
     }
 
     // get vertex of triangle t opposing neighbour neighbour
-    INLINE int getOpposingVertex(Triangle& t, int neighbour)
+    DELAUNAY_INLINE int getOpposingVertex(Triangle& t, int neighbour)
     {
         if (t.neighbours[0] == neighbour)
             return t.vertices[2];
@@ -198,7 +198,7 @@ namespace {
     }
 
     // get the triangle ID of right neighbour w.r.t to a vertex id
-    INLINE int getRightNeighbour(Triangle& t, int v)
+    DELAUNAY_INLINE int getRightNeighbour(Triangle& t, int v)
     {
         if (t.vertices[0] == v)
             return t.neighbours[2];
@@ -212,7 +212,7 @@ namespace {
     }
 
     // get the triangle ID of left neighbour w.r.t to a vertex id
-    INLINE int getLeftNeighbour(Triangle& t, int v)
+    DELAUNAY_INLINE int getLeftNeighbour(Triangle& t, int v)
     {
         if (t.vertices[0] == v)
             return t.neighbours[0];
@@ -226,7 +226,7 @@ namespace {
     }
 
     // ghost triangle adding functions required in ends of a "seam"
-    INLINE int addGhostTriangle(std::vector<Triangle>& triangles, int v1, int v2, int n2, int n3)
+    DELAUNAY_INLINE int addGhostTriangle(std::vector<Triangle>& triangles, int v1, int v2, int n2, int n3)
     {
         int s = triangles.size();
         triangles.emplace_back(-1, n2, n3, v1, v2, -1);
@@ -235,7 +235,7 @@ namespace {
         return s;
     }
 
-    INLINE int addGhostTriangle(std::vector<Triangle>& triangles, int v1, int v2, int n1, int n2, int n3)
+    DELAUNAY_INLINE int addGhostTriangle(std::vector<Triangle>& triangles, int v1, int v2, int n1, int n2, int n3)
     {
         int s = triangles.size();
         triangles.emplace_back(n1, n2, n3, v1, v2, -1);

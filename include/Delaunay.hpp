@@ -49,26 +49,6 @@ namespace {
         return m.determinant() > 0.0;
     }
 
-    // is p right of edge starting from e1 going to e2?
-    template <typename T_Scalar>
-    INLINE bool rightOf(
-        const Eigen::Matrix<T_Scalar, 2, 1>& e1,
-        const Eigen::Matrix<T_Scalar, 2, 1>& e2,
-        const Eigen::Matrix<T_Scalar, 2, 1>& p)
-    {
-        return ccw(e2, e1, p);
-    }
-
-    // is p left of edge starting from e1 going to e2?
-    template <typename T_Scalar>
-    INLINE bool leftOf(
-        const Eigen::Matrix<T_Scalar, 2, 1>& e1,
-        const Eigen::Matrix<T_Scalar, 2, 1>& e2,
-        const Eigen::Matrix<T_Scalar, 2, 1>& p)
-    {
-        return ccw(e1, e2, p);
-    }
-
     // is d inside of circumcircle of abc?
     template <typename T_Scalar>
     INLINE bool inCircle(
@@ -277,14 +257,14 @@ namespace {
             int nOps = 0;
             int leftNext = triangles[lastLeft].neighbours[1]; // next ghost triangle on the left mesh boundary
             int rightNext = triangles[firstRight].neighbours[2]; // next ghost triangle on the right mesh boundary
-            if (leftOf(
+            if (ccw(
                 points[triangles[leftNext].vertices[0]],
                 points[triangles[leftNext].vertices[1]],
                 points[triangles[firstRight].vertices[0]])) {
                 lastLeft = leftNext;
                 ++nOps;
             }
-            if (leftOf(
+            if (ccw(
                 points[triangles[rightNext].vertices[0]],
                 points[triangles[rightNext].vertices[1]],
                 points[triangles[lastLeft].vertices[1]])) {
@@ -322,7 +302,7 @@ namespace {
 
             // find connective candidates for both sides, delete non-delaunay edges by flipping
             int leftCand = triangles[lastLeft].vertices[0];
-            leftValid = leftOf(baseLeft, baseRight, points[leftCand]);
+            leftValid = ccw(baseLeft, baseRight, points[leftCand]);
             if (leftValid) {
                 int leftNeighbour = getRightNeighbour(triangles[lastLeft], baseLeftVertex);
                 int leftNeighbourCand = getOpposingVertex(triangles[leftNeighbour], lastLeft);
@@ -337,7 +317,7 @@ namespace {
             }
 
             int rightCand = triangles[firstRight].vertices[1];
-            rightValid = leftOf(baseLeft, baseRight, points[rightCand]);
+            rightValid = ccw(baseLeft, baseRight, points[rightCand]);
             if (rightValid) {
                 int rightNeighbour = getLeftNeighbour(triangles[firstRight], baseRightVertex);
                 int rightNeighbourCand = getOpposingVertex(triangles[rightNeighbour], firstRight);

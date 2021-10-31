@@ -12,10 +12,32 @@
 #define DELAUNAY_DELAUNAY_HPP
 
 
-#include <Eigen/Dense>
 #include <vector>
 #include <cstdint>
 
+
+#define DELAUNAY_BACKEND_EIGEN 1
+//#define DELAUNAY_BACKEND_OTHER 2 // add more enumerations for more supported backends
+
+// definitions for Eigen backend
+#if DELAUNAY_BACKEND == DELAUNAY_BACKEND_EIGEN
+    #include <Eigen/Dense>
+
+    #define DELAUNAY_VEC Eigen::Matrix<T_Scalar, 2, 1>
+    #define DELAUNAY_VEC_ACCESS(V, D) V(D)
+    #define DELAUNAY_DETERMINANT
+#endif
+
+// Check for macro definitions
+#ifndef DELAUNAY_VEC
+    #error "DELAUNAY_VEC not defined"
+#endif
+#ifndef DELAUNAY_VEC_ACCESS
+    #error "DELAUNAY_VEC_ACCESS not defined"
+#endif
+#ifndef DELAUNAY_DETERMINANT
+    #error "DELAUNAY_DETERMINANT not defined"
+#endif
 
 #ifdef DELAUNAY_INLINE
     #error "DELAUNAY_INLINE already defined"
@@ -37,26 +59,34 @@ namespace {
 
     template <typename T_Scalar>
     DELAUNAY_INLINE bool ccw(
-        const Eigen::Matrix<T_Scalar, 2, 1>& a,
-        const Eigen::Matrix<T_Scalar, 2, 1>& b,
-        const Eigen::Matrix<T_Scalar, 2, 1>& c)
+        const DELAUNAY_VEC& a,
+        const DELAUNAY_VEC& b,
+        const DELAUNAY_VEC& c)
     {
+#if DELAUNAY_BACKEND == DELAUNAY_BACKEND_EIGEN
         Eigen::Matrix<T_Scalar, 3, 3>   m;
         m <<
             a.transpose(),  1.0,
             b.transpose(),  1.0,
             c.transpose(),  1.0;
         return m.determinant() > 0.0;
+#else
+        return DELAUNAY_DETERMINANT(
+            DELAUNAY_VEC_ACCESS(a,0), DELAUNAY_VEC_ACCESS(a,1), (T_Scalar)1.0,
+            DELAUNAY_VEC_ACCESS(b,0), DELAUNAY_VEC_ACCESS(b,1), (T_Scalar)1.0,
+            DELAUNAY_VEC_ACCESS(c,0), DELAUNAY_VEC_ACCESS(c,1), (T_Scalar)1.0) > 0.0;
+#endif
     }
 
     // is d inside of circumcircle of abc?
     template <typename T_Scalar>
     DELAUNAY_INLINE bool inCircle(
-        const Eigen::Matrix<T_Scalar, 2, 1>& a,
-        const Eigen::Matrix<T_Scalar, 2, 1>& b,
-        const Eigen::Matrix<T_Scalar, 2, 1>& c,
-        const Eigen::Matrix<T_Scalar, 2, 1>& d)
+        const DELAUNAY_VEC& a,
+        const DELAUNAY_VEC& b,
+        const DELAUNAY_VEC& c,
+        const DELAUNAY_VEC& d)
     {
+#if DELAUNAY_BACKEND == DELAUNAY_BACKEND_EIGEN
         Eigen::Matrix<T_Scalar, 4, 4>   m;
         m <<
             a.transpose(),  a.dot(a),   1.0,
@@ -64,11 +94,26 @@ namespace {
             c.transpose(),  c.dot(c),   1.0,
             d.transpose(),  d.dot(d),   1.0;
         return m.determinant() > 0.0;
+#else
+        T_Scalar dx2 = DELAUNAY_VEC_ACCESS(d,0)*DELAUNAY_VEC_ACCESS(d,0);
+        T_Scalar dy2 = DELAUNAY_VEC_ACCESS(d,1)*DELAUNAY_VEC_ACCESS(d,1);
+        return DELAUNAY_DETERMINANT(
+            DELAUNAY_VEC_ACCESS(a,0)-DELAUNAY_VEC_ACCESS(d,0),
+            DELAUNAY_VEC_ACCESS(a,1)-DELAUNAY_VEC_ACCESS(d,1),
+            (DELAUNAY_VEC_ACCESS(a,0)*DELAUNAY_VEC_ACCESS(a,0)-dx2)+(DELAUNAY_VEC_ACCESS(a,1)*DELAUNAY_VEC_ACCESS(a,1)-dy2),
+            DELAUNAY_VEC_ACCESS(b,0)-DELAUNAY_VEC_ACCESS(d,0),
+            DELAUNAY_VEC_ACCESS(b,1)-DELAUNAY_VEC_ACCESS(d,1),
+            (DELAUNAY_VEC_ACCESS(b,0)*DELAUNAY_VEC_ACCESS(b,0)-dx2)+(DELAUNAY_VEC_ACCESS(b,1)*DELAUNAY_VEC_ACCESS(b,1)-dy2),
+            DELAUNAY_VEC_ACCESS(c,0)-DELAUNAY_VEC_ACCESS(d,0),
+            DELAUNAY_VEC_ACCESS(c,1)-DELAUNAY_VEC_ACCESS(d,1),
+            (DELAUNAY_VEC_ACCESS(c,0)*DELAUNAY_VEC_ACCESS(c,0)-dx2)+(DELAUNAY_VEC_ACCESS(c,1)*DELAUNAY_VEC_ACCESS(c,1)-dy2))
+            > 0.0;
+#endif
     }
 
     // initial primitive construction functions for edges and triangles
     template <template <typename, typename> class T_Vector, typename T_Scalar, typename T_Allocator>
-    DELAUNAY_INLINE void createEdge(const T_Vector<Eigen::Matrix<T_Scalar, 2, 1>, T_Allocator>& points,
+    DELAUNAY_INLINE void createEdge(const T_Vector<DELAUNAY_VEC, T_Allocator>& points,
         std::vector<Triangle>& triangles, int v1, int v2, int& firstTriangle, int& lastTriangle)
     {
         int s = triangles.size();
@@ -81,7 +126,7 @@ namespace {
 
     template <template <typename, typename> class T_Vector, typename T_Scalar, typename T_Allocator>
     DELAUNAY_INLINE void createTriangle(
-        T_Vector<Eigen::Matrix<T_Scalar, 2, 1>, T_Allocator>& points,
+        T_Vector<DELAUNAY_VEC, T_Allocator>& points,
         std::vector<Triangle>& triangles, int v1, int v2, int v3, int& firstTriangle, int& lastTriangle)
     {
         int s = triangles.size();
@@ -245,7 +290,7 @@ namespace {
     }
 
     template <template <typename, typename> class T_Vector, typename T_Scalar, typename T_Allocator>
-    void merge(T_Vector<Eigen::Matrix<T_Scalar, 2, 1>, T_Allocator>& points,
+    void merge(T_Vector<DELAUNAY_VEC, T_Allocator>& points,
         std::vector<Triangle>& triangles, int& firstLeft, int lastLeft, int firstRight, int& lastRight)
     {
         // keep track of end vertices in case the end triangles change
@@ -402,7 +447,7 @@ namespace {
     }
 
     template <template <typename, typename> class T_Vector, typename T_Scalar, typename T_Allocator>
-    void construct(T_Vector<Eigen::Matrix<T_Scalar, 2, 1>, T_Allocator>& points,
+    void construct(T_Vector<DELAUNAY_VEC, T_Allocator>& points,
         int begin, int end, std::vector<Triangle>& triangles, int& firstTriangle, int& lastTriangle)
     {
         int d = end-begin;
@@ -430,13 +475,15 @@ namespace {
 }
 
 template <template <typename, typename> class T_Vector, typename T_Scalar, typename T_Allocator>
-std::vector<int32_t> delaunayTriangulate(T_Vector<Eigen::Matrix<T_Scalar, 2, 1>, T_Allocator>& points)
+std::vector<int32_t> delaunayTriangulate(T_Vector<DELAUNAY_VEC, T_Allocator>& points)
 {
     // sort points primarily along x-axis (and along y-axis in case of equal x)
     std::sort(points.begin(), points.end(), [](
-        const Eigen::Matrix<T_Scalar, 2, 1>& a,
-        const Eigen::Matrix<T_Scalar, 2, 1>& b){
-        return a(0) == b(0) ? a(1) < b(1) : a(0) < b(0);
+        const DELAUNAY_VEC& a,
+        const DELAUNAY_VEC& b){
+        return DELAUNAY_VEC_ACCESS(a,0) == DELAUNAY_VEC_ACCESS(b,0) ?
+            DELAUNAY_VEC_ACCESS(a,1) < DELAUNAY_VEC_ACCESS(b,1) :
+            DELAUNAY_VEC_ACCESS(a,0) < DELAUNAY_VEC_ACCESS(b,0);
     });
 
     std::vector<Triangle> triangles;
@@ -455,6 +502,13 @@ std::vector<int32_t> delaunayTriangulate(T_Vector<Eigen::Matrix<T_Scalar, 2, 1>,
     }
     return indices;
 }
+
+
+// undefine macros
+#undef DELAUNAY_VEC
+#undef DELAUNAY_VEC_ACCESS
+#undef DELAUNAY_DETERMINANT
+#undef DELAUNAY_INLINE
 
 
 #endif //DELAUNAY_DELAUNAY_HPP

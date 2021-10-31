@@ -6,9 +6,12 @@ set(CMAKE_CXX_STANDARD 20)
 
 
 option(BUILD_DELAUNAY_DEMO "Build the demo, requires OpenCV" ON)
+option(DELAUNAY_USE_EIGEN "Use Eigen3 as backend" ON)
 
 
-find_package(Eigen3 REQUIRED)
+if (DELAUNAY_USE_EIGEN)
+    find_package(Eigen3 REQUIRED)
+endif()
 
 if (BUILD_DELAUNAY_DEMO)
     find_package(OpenCV REQUIRED)
@@ -22,10 +25,17 @@ target_include_directories(delaunay
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_link_libraries(delaunay
-    INTERFACE
-        Eigen3::Eigen
-)
+if (DELAUNAY_USE_EIGEN)
+    target_link_libraries(delaunay
+        INTERFACE
+            Eigen3::Eigen
+    )
+
+    target_compile_definitions(delaunay
+        INTERFACE
+            DELAUNAY_BACKEND=DELAUNAY_BACKEND_EIGEN
+    )
+endif()
 
 
 if (BUILD_DELAUNAY_DEMO)

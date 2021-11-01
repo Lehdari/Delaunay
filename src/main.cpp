@@ -8,18 +8,66 @@
 // with this source code package.
 //
 
-#include "Delaunay.hpp"
 #include <random>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
 
+#ifndef DELAUNAY_BACKEND
+// example implementation of a custom backend
+
+// minimal 2D vector struct
+template <typename T_Scalar>
+struct Vec2 {
+    T_Scalar  data[2];
+
+    // access with functor operator required only for demo dataset construction
+    // so it is identical with eigen
+    T_Scalar& operator()(int d) { return data[d]; }
+    const T_Scalar& operator()(int d) const { return data[d]; }
+
+    Vec2(T_Scalar x, T_Scalar y) :
+        data    {x,y}
+    {}
+};
+
+// 3x3 determinant
+template <typename T_Scalar>
+T_Scalar determinant(
+    T_Scalar a, T_Scalar b, T_Scalar c,
+    T_Scalar d, T_Scalar e, T_Scalar f,
+    T_Scalar g, T_Scalar h, T_Scalar i)
+{
+    return a*e*i + b*f*g + c*d*h - c*e*g - b*d*i - a*f*h;
+}
+
+// macros required for backend specification
+#define DELAUNAY_VEC Vec2<T_Scalar>
+#define DELAUNAY_VEC_ACCESS(V,D) V.data[D]
+#define DELAUNAY_DETERMINANT determinant
+
+#endif // ifndef DELAUNAY_BACKEND
+
+
+#include "Delaunay.hpp"
+
+
 #define RND ((rnd()%10000001)*0.0000001)
 
+
+#if DELAUNAY_BACKEND == DELAUNAY_BACKEND_EIGEN
 
 using Vec2d = Eigen::Matrix<double, 2, 1>;
 template <typename T>
 using Vector = std::vector<T, Eigen::aligned_allocator<T>>;
+
+#else // custom backend
+
+using Vec2d = Vec2<double>;
+template <typename T>
+using Vector = std::vector<T>;
+
+#endif
 
 
 // generate some non-uniform data (not very fancy but does the job)

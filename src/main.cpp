@@ -90,35 +90,26 @@ void createPoints(Vector<Vec2d>& v, const Vec2d& min, const Vec2d& max, int dept
 }
 
 
-int main()
+template <typename T>
+void visualize(const Vector<T>& points, std::vector<int32_t>& triangulation,
+    const std::string& windowName, const cv::Scalar& lineColor, int wait=0)
 {
-    Vector<Vec2d> points;
-    createPoints(points, Vec2d(0.0f, 0.0f), Vec2d(1024.0f, 1024.0f));
-
-    auto triangulation = delaunayTriangulate(points);
-
     cv::Mat img(1024, 1024, CV_8UC3);
 
     for (int i=0; i<triangulation.size(); i+=3) {
+        cv::line(img,
+            cv::Point(points[triangulation[i]](0), 1024-(int)points[triangulation[i]](1)),
+            cv::Point(points[triangulation[i+1]](0), 1024-(int)points[triangulation[i+1]](1)),
+            lineColor);
         if (triangulation[i+2] != -1) {
             cv::line(img,
-                cv::Point(points[triangulation[i]](0), 1024-(int)points[triangulation[i]](1)),
-                cv::Point(points[triangulation[i+1]](0), 1024-(int)points[triangulation[i+1]](1)),
-                cv::Scalar(120, 120, 0));
-            cv::line(img,
                 cv::Point(points[triangulation[i+1]](0), 1024-(int)points[triangulation[i+1]](1)),
                 cv::Point(points[triangulation[i+2]](0), 1024-(int)points[triangulation[i+2]](1)),
-                cv::Scalar(120, 120, 0));
+                lineColor);
             cv::line(img,
                 cv::Point(points[triangulation[i+2]](0), 1024-(int)points[triangulation[i+2]](1)),
                 cv::Point(points[triangulation[i]](0), 1024-(int)points[triangulation[i]](1)),
-                cv::Scalar(120, 120, 0));
-        }
-        else {
-            cv::line(img,
-                cv::Point(points[triangulation[i]](0), 1024-(int)points[triangulation[i]](1)),
-                cv::Point(points[triangulation[i+1]](0), 1024-(int)points[triangulation[i+1]](1)),
-                cv::Scalar(120, 120, 0));
+                lineColor);
         }
     }
 
@@ -126,8 +117,19 @@ int main()
         img.at<cv::Vec3b>(1023-(int)p(1), (int)p(0)) = cv::Vec3b(255, 255, 255);
     }
 
-    cv::imshow("delaunay demo", img);
-    cv::waitKey();
+    cv::imshow(windowName, img);
+    cv::waitKey(wait);
+}
+
+
+int main()
+{
+    Vector<Vec2d> points;
+    createPoints(points, Vec2d(0.0f, 0.0f), Vec2d(1024.0f, 1024.0f));
+
+    auto triangulation = delaunayTriangulate(points);
+
+    visualize(points, triangulation, "delaunay demo", cv::Scalar(120, 120, 0));
 
     return 0;
 }

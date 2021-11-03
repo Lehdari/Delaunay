@@ -86,17 +86,22 @@ namespace {
         const DELAUNAY_VEC& c,
         const DELAUNAY_VEC& d)
     {
-#if DELAUNAY_BACKEND == DELAUNAY_BACKEND_EIGEN
-        Eigen::Matrix<T_Scalar, 4, 4>   m;
-        m <<
-            a.transpose(),  a.dot(a),   1.0,
-            b.transpose(),  b.dot(b),   1.0,
-            c.transpose(),  c.dot(c),   1.0,
-            d.transpose(),  d.dot(d),   1.0;
-        return m.determinant() > 0.0;
-#else
         T_Scalar dx2 = DELAUNAY_VEC_ACCESS(d,0)*DELAUNAY_VEC_ACCESS(d,0);
         T_Scalar dy2 = DELAUNAY_VEC_ACCESS(d,1)*DELAUNAY_VEC_ACCESS(d,1);
+#if DELAUNAY_BACKEND == DELAUNAY_BACKEND_EIGEN
+        Eigen::Matrix<T_Scalar, 3, 3>   m;
+        m <<
+            DELAUNAY_VEC_ACCESS(a,0)-DELAUNAY_VEC_ACCESS(d,0),
+            DELAUNAY_VEC_ACCESS(a,1)-DELAUNAY_VEC_ACCESS(d,1),
+            (DELAUNAY_VEC_ACCESS(a,0)*DELAUNAY_VEC_ACCESS(a,0)-dx2)+(DELAUNAY_VEC_ACCESS(a,1)*DELAUNAY_VEC_ACCESS(a,1)-dy2),
+            DELAUNAY_VEC_ACCESS(b,0)-DELAUNAY_VEC_ACCESS(d,0),
+            DELAUNAY_VEC_ACCESS(b,1)-DELAUNAY_VEC_ACCESS(d,1),
+            (DELAUNAY_VEC_ACCESS(b,0)*DELAUNAY_VEC_ACCESS(b,0)-dx2)+(DELAUNAY_VEC_ACCESS(b,1)*DELAUNAY_VEC_ACCESS(b,1)-dy2),
+            DELAUNAY_VEC_ACCESS(c,0)-DELAUNAY_VEC_ACCESS(d,0),
+            DELAUNAY_VEC_ACCESS(c,1)-DELAUNAY_VEC_ACCESS(d,1),
+            (DELAUNAY_VEC_ACCESS(c,0)*DELAUNAY_VEC_ACCESS(c,0)-dx2)+(DELAUNAY_VEC_ACCESS(c,1)*DELAUNAY_VEC_ACCESS(c,1)-dy2);
+        return m.determinant() > 0.0;
+#else
         return DELAUNAY_DETERMINANT(
             DELAUNAY_VEC_ACCESS(a,0)-DELAUNAY_VEC_ACCESS(d,0),
             DELAUNAY_VEC_ACCESS(a,1)-DELAUNAY_VEC_ACCESS(d,1),

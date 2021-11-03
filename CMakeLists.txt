@@ -9,7 +9,7 @@ option(BUILD_DELAUNAY_DEMO "Build the demo, requires OpenCV" ON)
 option(DELAUNAY_USE_EIGEN "Use Eigen3 as backend" ON)
 
 
-if (DELAUNAY_USE_EIGEN)
+if (DELAUNAY_USE_EIGEN OR BUILD_DELAUNAY_DEMO)
     find_package(Eigen3 REQUIRED)
 endif()
 
@@ -46,6 +46,7 @@ target_link_libraries(delaunay_demo
     PUBLIC
         delaunay
         ${OpenCV_LIBS}
+        Eigen3::Eigen
 )
 
 endif()

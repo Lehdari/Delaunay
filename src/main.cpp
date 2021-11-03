@@ -11,6 +11,7 @@
 #include <random>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <Eigen/Dense>
 
 
 #ifndef DELAUNAY_BACKEND
@@ -58,11 +59,13 @@ T_Scalar determinant(
 #if DELAUNAY_BACKEND == DELAUNAY_BACKEND_EIGEN
 
 using Vec2d = Eigen::Matrix<double, 2, 1>;
+using Vec2f = Eigen::Matrix<float, 2, 1>;
 template <typename T>
 using Vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
 #else // custom backend
 
+using Vec2f = Vec2<float>;
 using Vec2d = Vec2<double>;
 template <typename T>
 using Vector = std::vector<T>;
@@ -91,10 +94,23 @@ void createPoints(Vector<Vec2d>& v, const Vec2d& min, const Vec2d& max, int dept
 
 
 template <typename T>
+void createPointsUniform(Vector<T>& v, const T& min, const T& max, int n)
+{
+    std::default_random_engine rnd(1507715517);
+    v.reserve(n);
+
+    for (int i=0; i<n; ++i) {
+        v.emplace_back(min(0) + RND*(max(0)-min(0)), min(1) + RND*(max(1)-min(1)));
+        v.emplace_back(min(0) + RND*(max(0)-min(0)), min(1) + RND*(max(1)-min(1)));
+    }
+}
+
+
+template <typename T>
 void visualize(const Vector<T>& points, std::vector<int32_t>& triangulation,
     const std::string& windowName, const cv::Scalar& lineColor, int wait=0)
 {
-    cv::Mat img(1024, 1024, CV_8UC3);
+    cv::Mat img(1024, 1024, CV_8UC3, cv::Scalar(0, 0, 0));
 
     for (int i=0; i<triangulation.size(); i+=3) {
         cv::line(img,
@@ -122,14 +138,93 @@ void visualize(const Vector<T>& points, std::vector<int32_t>& triangulation,
 }
 
 
+template <typename T>
+inline __attribute__((always_inline)) bool inCircle(
+    const T& a, const T& b, const T& c, const T& d)
+{
+    Eigen::Matrix<T, 4, 4>   m;
+    m <<
+        a(0), a(1), a(0)*a(0) + a(1)*a(1), 1.0,
+        b(0), b(1), b(0)*b(0) + b(1)*b(1), 1.0,
+        c(0), c(1), c(0)*c(0) + c(1)*c(1), 1.0,
+        d(0), d(1), d(0)*d(0) + d(1)*d(1), 1.0;
+    return m.determinant() > 0.0;
+}
+
+
+template <typename T>
+bool checkTriangulation(const Vector<T>& points, std::vector<int32_t>& triangulation)
+{
+    for (size_t i=0; i<triangulation.size(); i+=3) {
+        int p1 = triangulation[i];
+        int p2 = triangulation[i+1];
+        int p3 = triangulation[i+2];
+        if (p3 == -1)
+            continue;
+
+        for (size_t j=0; j<points.size(); ++j) {
+            if (j == p1 || j == p2 || j == p3)
+                continue;
+            if (inCircle(points[p1], points[p2], points[p3], points[j]))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+
+void benchmark(void) {
+    int nPoints = 10;
+    bool breakLoop = false;
+    while (true) {
+        Vector<Vec2f> pointsFloat;
+        Vector<Vec2d> pointsDouble;
+        pointsFloat.clear();
+        pointsDouble.clear();
+        createPointsUniform(pointsFloat, Vec2f(0.0, 0.0), Vec2f(1024.0, 1024.0), nPoints);
+        createPointsUniform(pointsDouble, Vec2d(0.0, 0.0), Vec2d(1024.0, 1024.0), nPoints);
+
+        auto t1 = std::chrono::high_resolution_clock::now();
+        auto triangulationFloat = delaunayTriangulate(pointsFloat);
+        auto t2 = std::chrono::high_resolution_clock::now();
+        auto triangulationDouble = delaunayTriangulate(pointsDouble);
+        auto t3 = std::chrono::high_resolution_clock::now();
+
+        printf("nPoints: %d, tFloat: %0.5f, tDouble: %0.5f\n", nPoints,
+            std::chrono::duration<double, std::milli>(t2-t1).count(),
+            std::chrono::duration<double, std::milli>(t3-t2).count());
+
+        if (!checkTriangulation(pointsFloat, triangulationFloat)) {
+            printf("Triangulation is non-delaunay!\n");
+            breakLoop = true;
+        }
+
+        visualize(pointsDouble, triangulationDouble, "triangulationDouble", cv::Scalar(120, 120, 0), 20);
+        visualize(pointsFloat, triangulationFloat, "triangulationFloat", cv::Scalar(0, 80, 160), 20);
+
+        if (breakLoop) {
+            cv::waitKey(0);
+            break;
+        }
+
+        nPoints *= 1.1;
+    }
+}
+
+
 int main()
 {
+#if 0
     Vector<Vec2d> points;
     createPoints(points, Vec2d(0.0f, 0.0f), Vec2d(1024.0f, 1024.0f));
 
     auto triangulation = delaunayTriangulate(points);
 
     visualize(points, triangulation, "delaunay demo", cv::Scalar(120, 120, 0));
+#else
+    benchmark();
+#endif
 
     return 0;
 }

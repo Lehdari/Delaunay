@@ -14,6 +14,16 @@
 #include <Eigen/Dense>
 
 
+// 3x3 determinant
+template <typename T_Scalar>
+T_Scalar inline __attribute__((always_inline)) determinant(
+    const T_Scalar& a, const T_Scalar& b, const T_Scalar& c,
+    const T_Scalar& d, const T_Scalar& e, const T_Scalar& f,
+    const T_Scalar& g, const T_Scalar& h, const T_Scalar& i)
+{
+    return a*e*i + b*f*g + c*d*h - c*e*g - b*d*i - a*f*h;
+}
+
 #ifndef DELAUNAY_BACKEND
 // example implementation of a custom backend
 
@@ -31,16 +41,6 @@ struct Vec2 {
         data    {x,y}
     {}
 };
-
-// 3x3 determinant
-template <typename T_Scalar>
-T_Scalar determinant(
-    T_Scalar a, T_Scalar b, T_Scalar c,
-    T_Scalar d, T_Scalar e, T_Scalar f,
-    T_Scalar g, T_Scalar h, T_Scalar i)
-{
-    return a*e*i + b*f*g + c*d*h - c*e*g - b*d*i - a*f*h;
-}
 
 // macros required for backend specification
 #define DELAUNAY_VEC Vec2<T_Scalar>
@@ -142,13 +142,11 @@ template <typename T>
 inline __attribute__((always_inline)) bool inCircle(
     const T& a, const T& b, const T& c, const T& d)
 {
-    Eigen::Matrix<T, 4, 4>   m;
-    m <<
-        a(0), a(1), a(0)*a(0) + a(1)*a(1), 1.0,
-        b(0), b(1), b(0)*b(0) + b(1)*b(1), 1.0,
-        c(0), c(1), c(0)*c(0) + c(1)*c(1), 1.0,
-        d(0), d(1), d(0)*d(0) + d(1)*d(1), 1.0;
-    return m.determinant() > 0.0;
+    T dd(d(0)*d(0), d(1)*d(1));
+    return determinant(
+        a(0)-d(0), a(1)-d(1), (a(0)*a(0)-dd(0))+(a(1)*a(1)-dd(1)),
+        b(0)-d(0), b(1)-d(1), (b(0)*b(0)-dd(0))+(b(1)*b(1)-dd(1)),
+        c(0)-d(0), c(1)-d(1), (c(0)*c(0)-dd(0))+(c(1)*c(1)-dd(1))) > 0.0;
 }
 
 

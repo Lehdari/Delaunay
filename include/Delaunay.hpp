@@ -303,6 +303,7 @@ namespace {
         int lastVertex = triangles[lastRight].vertices[1];
 
         // find the lower common tangent
+        int iterId = 0;
         while (true) {
             int nOps = 0;
             int leftNext = triangles[lastLeft].neighbours[1]; // next ghost triangle on the left mesh boundary
@@ -326,6 +327,8 @@ namespace {
                 // lower common tangent has been found
                 break;
             }
+            if (++iterId > points.size()) // maximum number of iterations reached, sign of numerical instability
+                break;
         }
 
         bool leftValid = true;
@@ -346,6 +349,7 @@ namespace {
         int lastConnectedTriangle = -1;
 
         // merge loop
+        iterId = 0;
         while (leftValid || rightValid) {
             auto& baseLeft = points[baseLeftVertex];
             auto& baseRight = points[baseRightVertex];
@@ -429,6 +433,9 @@ namespace {
 
                 lastConnectedSide = 0;
             }
+
+            if (++iterId > points.size()) // maximum number of iterations reached, sign of numerical instability
+                break;
         }
 
         // add new ghost triangle to the end of the seam

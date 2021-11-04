@@ -192,13 +192,13 @@ void benchmark(void) {
             std::chrono::duration<double, std::milli>(t2-t1).count(),
             std::chrono::duration<double, std::milli>(t3-t2).count());
 
+        visualize(pointsDouble, triangulationDouble, "triangulationDouble", cv::Scalar(120, 120, 0), 20);
+        visualize(pointsFloat, triangulationFloat, "triangulationFloat", cv::Scalar(0, 80, 160), 20);
+
         if (!checkTriangulation(pointsFloat, triangulationFloat)) {
             printf("Triangulation is non-delaunay!\n");
             breakLoop = true;
         }
-
-        visualize(pointsDouble, triangulationDouble, "triangulationDouble", cv::Scalar(120, 120, 0), 20);
-        visualize(pointsFloat, triangulationFloat, "triangulationFloat", cv::Scalar(0, 80, 160), 20);
 
         if (breakLoop) {
             cv::waitKey(0);

@@ -101,7 +101,6 @@ void createPointsUniform(Vector<T>& v, const T& min, const T& max, int n)
 
     for (int i=0; i<n; ++i) {
         v.emplace_back(min(0) + RND*(max(0)-min(0)), min(1) + RND*(max(1)-min(1)));
-        v.emplace_back(min(0) + RND*(max(0)-min(0)), min(1) + RND*(max(1)-min(1)));
     }
 }
 

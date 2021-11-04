@@ -183,9 +183,9 @@ void benchmark(void) {
         createPointsUniform(pointsDouble, Vec2d(0.0, 0.0), Vec2d(1024.0, 1024.0), nPoints);
 
         auto t1 = std::chrono::high_resolution_clock::now();
-        auto triangulationFloat = delaunayTriangulate(pointsFloat);
+        auto triangulationFloat = delaunay::triangulate(pointsFloat);
         auto t2 = std::chrono::high_resolution_clock::now();
-        auto triangulationDouble = delaunayTriangulate(pointsDouble);
+        auto triangulationDouble = delaunay::triangulate(pointsDouble);
         auto t3 = std::chrono::high_resolution_clock::now();
 
         printf("nPoints: %d, tFloat: %0.5f, tDouble: %0.5f\n", nPoints,
@@ -216,7 +216,7 @@ int main()
     Vector<Vec2d> points;
     createPoints(points, Vec2d(0.0f, 0.0f), Vec2d(1024.0f, 1024.0f));
 
-    auto triangulation = delaunayTriangulate(points);
+    auto triangulation = delaunay::triangulate(points);
 
     visualize(points, triangulation, "delaunay demo", cv::Scalar(120, 120, 0));
 #else

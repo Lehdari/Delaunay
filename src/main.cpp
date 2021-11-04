@@ -138,11 +138,11 @@ void visualize(const Vector<T>& points, std::vector<int32_t>& triangulation,
 
 
 template <typename T>
-inline __attribute__((always_inline)) bool inCircle(
+inline __attribute__((always_inline)) bool inCircle2(
     const T& a, const T& b, const T& c, const T& d)
 {
     T dd(d(0)*d(0), d(1)*d(1));
-    return determinant(
+    return determinant<double>(
         a(0)-d(0), a(1)-d(1), (a(0)*a(0)-dd(0))+(a(1)*a(1)-dd(1)),
         b(0)-d(0), b(1)-d(1), (b(0)*b(0)-dd(0))+(b(1)*b(1)-dd(1)),
         c(0)-d(0), c(1)-d(1), (c(0)*c(0)-dd(0))+(c(1)*c(1)-dd(1))) > 0.0;
@@ -162,7 +162,7 @@ bool checkTriangulation(const Vector<T>& points, std::vector<int32_t>& triangula
         for (size_t j=0; j<points.size(); ++j) {
             if (j == p1 || j == p2 || j == p3)
                 continue;
-            if (inCircle(points[p1], points[p2], points[p3], points[j]))
+            if (inCircle2(points[p1], points[p2], points[p3], points[j]))
                 return false;
         }
     }
